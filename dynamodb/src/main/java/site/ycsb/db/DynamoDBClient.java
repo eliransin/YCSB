@@ -19,8 +19,6 @@ package site.ycsb.db;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
@@ -29,7 +27,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import site.ycsb.*;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,7 +78,6 @@ public class DynamoDBClient extends DB {
     }
 
     String configuredEndpoint = getProperties().getProperty("dynamodb.endpoint", null);
-    String credentialsFile = getProperties().getProperty("dynamodb.awsCredentialsFile", null);
     String primaryKey = getProperties().getProperty("dynamodb.primaryKey", null);
     String primaryKeyTypeString = getProperties().getProperty("dynamodb.primaryKeyType", null);
     String consistentReads = getProperties().getProperty("dynamodb.consistentReads", null);
@@ -144,7 +140,6 @@ public class DynamoDBClient extends DB {
                   .withTcpKeepAlive(true)
                   .withMaxConnections(this.maxConnects)
           )
-          .withCredentials(new AWSStaticCredentialsProvider(new PropertiesCredentials(new File(credentialsFile))))
           .build();
       primaryKeyName = primaryKey;
       LOGGER.info("dynamodb connection created with " + this.endpoint);
