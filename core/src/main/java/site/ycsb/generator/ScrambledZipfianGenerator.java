@@ -106,13 +106,21 @@ zipfian constant
   }
 
   public static void main(String[] args) {
-    double newzetan = ZipfianGenerator.zetastatic(ITEM_COUNT, ZipfianGenerator.ZIPFIAN_CONSTANT);
-    System.out.println("zetan: " + newzetan);
-    System.exit(0);
 
-    ScrambledZipfianGenerator gen = new ScrambledZipfianGenerator(10000);
+    // double newzetan = ZipfianGenerator.zetastatic(ITEM_COUNT, ZipfianGenerator.ZIPFIAN_CONSTANT);
+    // System.out.println("zetan: " + newzetan);
+    // System.exit(0);
+    long numItems = 1000000;
+    long numGenerate = 1000000;
+    if (args.length >= 1) {
+      numItems = Long.parseLong(args[0]);
+    }
+    if (args.length >=2) {
+      numGenerate = Long.parseLong(args[1]);
+    }
+    ScrambledZipfianGenerator gen = new ScrambledZipfianGenerator(numItems);
 
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < numGenerate; i++) {
       System.out.println("" + gen.nextValue());
     }
   }
