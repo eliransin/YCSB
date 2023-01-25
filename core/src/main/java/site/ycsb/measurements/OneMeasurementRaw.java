@@ -100,7 +100,28 @@ public class OneMeasurementRaw extends OneMeasurement {
   // average.
   private int windowOperations = 0;
   private long windowTotalLatency = 0;
+  private Thread measDumper;
+  private static Object dumpLock = new Object();
 
+  private synchronized void dumpMeasurements() {
+    LinkedList<RawDataPoint> oldMeas = measurements;
+    measurements = new LinkedList<>();
+    measDumper = new Thread(new Runnable(){
+      private LinkedList<RawDataPoint> m = oldMeas;
+      @Override
+      public void run() {
+        synchronized(dumpLock) {
+          outputStream.println(getName() +
+              " latency raw data: op, timestamp(ms), latency(us)");
+          for (RawDataPoint point : m) {
+            outputStream.println(
+                String.format("%s,%d,%d", getName(), point.timeStamp(), point.value()));
+          }
+        }
+      }
+    });
+    measDumper.start();
+  }
   public OneMeasurementRaw(String name, Properties props) {
     super(name);
 
@@ -144,15 +165,26 @@ public class OneMeasurementRaw extends OneMeasurement {
     // Output raw data points first then print out a summary of percentiles to
     // stdout.
 
-    outputStream.println(getName() +
-        " latency raw data: op, timestamp(ms), latency(us)");
-    for (RawDataPoint point : measurements) {
-      outputStream.println(
-          String.format("%s,%d,%d", getName(), point.timeStamp(),
-              point.value()));
-    }
-    if (outputStream != System.out) {
-      outputStream.close();
+    // outputStream.println(getName() +
+    //     " latency raw data: op, timestamp(ms), latency(us)");
+    // for (RawDataPoint point : measurements) {
+    //   outputStream.println(
+    //       String.format("%s,%d,%d", getName(), point.timeStamp(),
+    //           point.value()));
+    // }
+    dumpMeasurements();
+    try {
+      synchronized(this) {
+        synchronized(measDumper) {
+          measDumper.wait();
+        }
+      }
+    } catch (InterruptedException e) {
+      // Ignored
+    } finally {
+      if (outputStream != System.out) {
+        outputStream.close();
+      }
     }
 
     int totalOps = measurements.size();
@@ -194,7 +226,7 @@ public class OneMeasurementRaw extends OneMeasurement {
     if (windowOperations == 0) {
       return "";
     }
-
+    dumpMeasurements();
     String toReturn = String.format("%s count: %d, average latency(us): %.2f",
         getName(), windowOperations,
         (double) windowTotalLatency / (double) windowOperations);
